@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 
 namespace DiAl.ImageProcessing
 {
@@ -30,30 +31,24 @@ namespace DiAl.ImageProcessing
 		public static Image SegmentedImage(Image image)
 		{
 			Int32 level = 1;
-			Int32[,] labels = new Int32[image.Size.X, image.Size.Y];
-			for(Int32 i = 0; i < labels.GetLength(0); ++i)
-			{
-				for (Int32 j = 0; j < labels.GetLength(1); ++j)
-				{
-					labels[i, j] = 0;
-				}
-			}
+			HashSet<Point> labels = new HashSet<Point>();
 			for (Int32 y = 0; y < image.Size.Y; ++y)
 			{
 				for (Int32 x = 0; x < image.Size.X; ++x)
 				{
-					Fill(image, ref labels, new Point(x, y), level++);
+					Fill(image, ref labels, new Point(x, y), level);
+					level += 10;
 				}
 			}
 			return image;
 		}
 
-		public static void Fill(Image image, ref Int32[,] labels, Point point, Int32 level)
+		public static void Fill(Image image, ref HashSet<Point> labels, Point point, Int32 level)
 		{
-			if((labels[point.X, point.Y] == 0) && (image[point.X, point.Y].GetBrightness() > 240))
+			if((!labels.Contains(point)) && (image[point.X, point.Y].GetBrightness() > 200))
 			{
 				image[point.X, point.Y].ToBinary(200, level);
-				labels[point.X, point.Y] = level;
+				labels.Add(point);
 				if(point.X > 0)
 					Fill(image, ref labels, new Point(point.X - 1, point.Y), level);
 				if(point.X < image.Size.X - 1)

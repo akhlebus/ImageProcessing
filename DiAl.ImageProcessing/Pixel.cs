@@ -15,7 +15,7 @@ namespace DiAl.ImageProcessing
 			return _pixel;
 		}
 
-		public static implicit operator Int32(Pixel pixel)
+		public static explicit operator Int32(Pixel pixel)
 		{
 			return pixel.ToInt32();
 		}
@@ -69,8 +69,6 @@ namespace DiAl.ImageProcessing
 
 		public void ToBinary(Int32 brightnessThreshold, Int32 level)
 		{
-			//byte brightness = (byte)((GetBrightness() < brightnessThreshold) ? 0 : 50 + (level % 100));
-			//_pixel = BitConverter.ToInt32(new[] { brightness, brightness, brightness, brightness }, 0);
 			_pixel = BitConverter.ToInt32(new byte[] { (byte)(50 + (level % 100)), 0, (byte)(level % 100), 0 }, 0);
 		}
 	}

@@ -23,13 +23,13 @@ namespace DiAl.ImageProcessing
 			{
 				if (!IsValid(x, y))
 					throw new ApplicationException();
-				return _pixels[x * Size.Y + y];
+				return _pixels[x + y * Size.X];
 			}
 			set
 			{
 				if (!IsValid(x, y))
 					throw new ApplicationException();
-				_pixels[x * Size.Y + y] = value;
+				_pixels[x + y * Size.X] = value;
 			}
 		}
 
