@@ -69,7 +69,7 @@ namespace DiAl.ImageProcessing
 
 		public void ToBinary(Int32 brightnessThreshold, Int32 level)
 		{
-			_pixel = BitConverter.ToInt32(new byte[] { (byte)(50 + (level % 100)), 0, (byte)(level % 100), 0 }, 0);
+			_pixel = level;
 		}
 	}
 }

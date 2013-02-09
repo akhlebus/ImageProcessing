@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 
 namespace DiAl.ImageProcessing
@@ -51,6 +52,47 @@ namespace DiAl.ImageProcessing
 		public object Clone()
 		{
 			return new Image(GetPixels(), Size);
+		}
+
+		public IEnumerable<Point> GetNeighbores(Point point, Int32 count)
+		{
+			var outList = new List<Point>(count);
+			switch(count)
+			{
+				case 4:
+					if(point.X > 0)
+						outList.Add(new Point(point.X - 1, point.Y));
+					if(point.X < Size.X - 1)
+						outList.Add(new Point(point.X + 1, point.Y));
+					if(point.Y > 0)
+						outList.Add(new Point(point.X, point.Y - 1));
+					if(point.Y < Size.Y - 1)
+						outList.Add(new Point(point.X, point.Y + 1));
+					break;
+				case 8:
+					if(point.X > 0)
+						outList.Add(new Point(point.X - 1, point.Y));
+					if (point.Y > 0)
+						outList.Add(new Point(point.X, point.Y - 1));
+					if((point.X > 0) && (point.Y > 0))
+						outList.Add(new Point(point.X - 1, point.Y - 1));
+
+					if(point.X < Size.X - 1)
+						outList.Add(new Point(point.X + 1, point.Y));
+					if(point.Y < Size.Y - 1)
+						outList.Add(new Point(point.X, point.Y + 1));
+					if ((point.X < Size.X - 1) && (point.Y < Size.Y - 1))
+						outList.Add(new Point(point.X + 1, point.Y + 1));
+
+					if ((point.X > 0) && (point.Y < Size.Y - 1))
+						outList.Add(new Point(point.X - 1, point.Y + 1));
+					if ((point.X < Size.X - 1) && (point.Y > 0))
+						outList.Add(new Point(point.X + 1, point.Y - 1));
+					break;
+				default:
+					throw new ApplicationException();
+			}
+			return outList;
 		}
 	}
 }

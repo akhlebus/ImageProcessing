@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Windows.Media;
 
 namespace DiAl.ImageProcessing
@@ -33,31 +34,73 @@ namespace DiAl.ImageProcessing
 			image.SetPixels(outPixels);
 		}
 
-		private static Int32 countFunctionCopy;
-		public const Int32 MaxCountFunctionCopy = 5000;
-		public static Image SegmentedImage(Image image)
+		public static void SegmentedView(Image image, bool isRecursive = false)
 		{
-			Int32 level = 1;
+			if (isRecursive)
+				RecursiveSegmentedView(image);
+			else
+				IterativeSegmentedView(image);
+		}
+		private static void IterativeSegmentedView(Image image)
+		{
+			Random random = new Random();
 			HashSet<Point> labels = new HashSet<Point>();
 			for (Int32 y = 0; y < image.Size.Y; ++y)
 			{
 				for (Int32 x = 0; x < image.Size.X; ++x)
 				{
-					RecursionResolver(image, ref labels, new Point(x, y), level);
-					level += 10;
+					var point = new Point(x, y);
+					QuickFill(image, ref labels, point, random.Next());
 				}
 			}
-			return image;
+		}
+		private static void QuickFill(Image image, ref HashSet<Point> labels, Point point, Int32 level)
+		{
+			if (image[point.X, point.Y].GetBrightness() > 200)
+			{
+				labels.Add(point);
+				if (!labels.Contains(new Point(point.X - 1, point.Y)) && !labels.Contains(new Point(point.X, point.Y - 1)))
+				{
+					image[point.X, point.Y].ToBinary(200, level);
+				}
+				else if (labels.Contains(new Point(point.X - 1, point.Y)))
+				{
+					image[point.X, point.Y].ToBinary(200, image[point.X - 1, point.Y].ToInt32());
+				}
+				else if (labels.Contains(new Point(point.X, point.Y - 1)))
+				{
+					image[point.X, point.Y].ToBinary(200, image[point.X, point.Y - 1].ToInt32());
+				}
+				else
+				{
+					throw new ApplicationException();
+				}
+			}
 		}
 
-		public static void RecursionResolver(Image image, ref HashSet<Point> labels, Point point, Int32 level)
+		private static Int32 _countFunctionCopy;
+		public const Int32 MaxCountFunctionCopy = 5000;
+		private static void RecursiveSegmentedView(Image image)
 		{
-			countFunctionCopy = 0;
-			var outList = new List<Point>();
+			HashSet<Point> labels = new HashSet<Point>();
+			for (Int32 y = 0; y < image.Size.Y; ++y)
+			{
+				Random random = new Random();
+				for (Int32 x = 0; x < image.Size.X; ++x)
+				{
+					var point = new Point(x, y);
+					if (!labels.Contains(point))
+						RecursionResolver(image, ref labels, point, random.Next());
+				}
+			}
+		}
+		private static void RecursionResolver(Image image, ref HashSet<Point> labels, Point point, Int32 level)
+		{
+			_countFunctionCopy = 0;
 			var unprocessedPoints = Fill(image, ref labels, point, level);
 			foreach (var currentPoint in unprocessedPoints)
 			{
-				outList.AddRange(Fill(image, ref labels, currentPoint, level));
+				var outList = new List<Point>(Fill(image, ref labels, currentPoint, level));
 				if (outList.Count != 0)
 				{
 					foreach (var currentInnerPoint in outList)
@@ -67,17 +110,20 @@ namespace DiAl.ImageProcessing
 				}
 			}
 		}
-
-		public static IEnumerable<Point> Fill(Image image, ref HashSet<Point> labels, Point point, Int32 level)
+		private static IEnumerable<Point> Fill(Image image, ref HashSet<Point> labels, Point point, Int32 level)
 		{
-			++countFunctionCopy;
+			++_countFunctionCopy;
 			var outList = new List<Point>();
-			if (countFunctionCopy >= MaxCountFunctionCopy)
+			if ((image[point.X, point.Y].GetBrightness() < 200))
+			{
+				return outList;
+			}
+			if (_countFunctionCopy >= MaxCountFunctionCopy)
 			{
 				outList.Add(point);
 				return outList;
 			}
-			if((!labels.Contains(point)) && (image[point.X, point.Y].GetBrightness() > 200))
+			if((!labels.Contains(point)))
 			{
 				image[point.X, point.Y].ToBinary(200, level);
 				labels.Add(point);
@@ -91,6 +137,22 @@ namespace DiAl.ImageProcessing
 					outList.AddRange(Fill(image, ref labels, new Point(point.X, point.Y + 1), level));
 			}
 			return outList;
+		}
+
+		public static void StricturedView(Image image)
+		{
+			for (Int32 y = 0; y < image.Size.Y; ++y)
+			{
+				for (Int32 x = 0; x < image.Size.X; ++x)
+				{
+					var neighbors = image.GetNeighbores(new Point(x, y), 8).ToList();
+					if (neighbors.Count(point => image[point.X, point.Y].GetBrightness() < 200) < 4)
+					{
+						const byte brightness = (byte) (255);
+						image[x, y] = BitConverter.ToInt32(new[] { brightness, brightness, brightness, brightness }, 0);
+					}
+				}
+			}
 		}
 	}
 }
